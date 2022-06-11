@@ -15,6 +15,7 @@ actions.resetSelectedRows = 'resetSelectedRows'
 actions.toggleAllRowsSelected = 'toggleAllRowsSelected'
 actions.toggleRowSelected = 'toggleRowSelected'
 actions.toggleAllPageRowsSelected = 'toggleAllPageRowsSelected'
+actions.toggleRowsSelectable = 'toggleRowsSelectable'
 
 export const useRowSelect = hooks => {
   hooks.getToggleRowSelectedProps = [defaultGetToggleRowSelectedProps]
@@ -96,6 +97,7 @@ function reducer(state, action, previousState, instance) {
   if (action.type === actions.init) {
     return {
       selectedRowIds: {},
+      rowsSelectable: true,
       ...state,
     }
   }
@@ -215,6 +217,19 @@ function reducer(state, action, previousState, instance) {
       selectedRowIds: newSelectedRowIds,
     }
   }
+
+  if (action.type === actions.toggleRowsSelectable) {
+    const { rowsSelectable } = action
+    const { allColumns } = instance
+
+    allColumns[0].show = rowsSelectable
+    
+    return {
+      ...state,
+      rowsSelectable: rowsSelectable
+    }
+  }
+
   return state
 }
 
@@ -222,12 +237,13 @@ function useInstance(instance) {
   const {
     data,
     rows,
+    allColumns,
     getHooks,
     plugins,
     rowsById,
     nonGroupedRowsById = rowsById,
     autoResetSelectedRows = true,
-    state: { selectedRowIds },
+    state: { selectedRowIds, rowsSelectable },
     selectSubRows = true,
     dispatch,
     page,
@@ -237,7 +253,7 @@ function useInstance(instance) {
   ensurePluginOrder(
     plugins,
     ['useFilters', 'useGroupBy', 'useSortBy', 'useExpanded', 'usePagination'],
-    'useRowSelect'
+    'useRowSelectOptional'
   )
 
   const selectedFlatRows = React.useMemo(() => {
@@ -311,6 +327,13 @@ function useInstance(instance) {
     { instance: getInstance() }
   )
 
+  const toggleRowsSelectable = React.useCallback(
+    rowsSelectable => {
+      dispatch({ type: actions.toggleRowsSelectable, rowsSelectable })
+    },
+    [dispatch]
+  )
+
   Object.assign(instance, {
     selectedFlatRows,
     isAllRowsSelected,
@@ -320,6 +343,7 @@ function useInstance(instance) {
     getToggleAllRowsSelectedProps,
     getToggleAllPageRowsSelectedProps,
     toggleAllPageRowsSelected,
+    toggleRowsSelectable
   })
 }
 
